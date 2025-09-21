@@ -1,0 +1,28 @@
+version: '3.7'
+
+services:
+  # Elasticsearch: 데이터 저장 및 APM 서버/Kibana가 사용하는 검색 엔진
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.13
+    environment:
+      - discovery.type=single-node      # 단일 노드 모드 (클러스터 없이 실행)
+      - xpack.security.enabled=false    # 인증 비활성화 (로컬 테스트용)
+    ports:
+      - "9200:9200"                     # 호스트 9200 포트를 컨테이너 9200 포트에 매핑
+
+  # Kibana: Elasticsearch 데이터를 시각화하고 APM 트랜잭션을 확인하는 UI
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.17.13
+    ports:
+      - "5601:5601"                     # 호스트 5601 포트를 컨테이너 5601 포트에 매핑
+    depends_on:
+      - elasticsearch                   # Elasticsearch가 먼저 실행되어야 함
+
+  # APM 서버: FastAPI에서 보내는 트랜잭션/에러 데이터를 수집
+  apm-server:
+    image: docker.elastic.co/apm/apm-server:7.17.13
+    ports:
+      - "8200:8200"                     # 호스트 8200 포트를 컨테이너 8200 포트에 매핑
+    depends_on:
+      - elasticsearch                   # Elasticsearch가 먼저 실행되어야 함
+    command: ["--strict.perms=false"]   # 권한 관련 체크 비활성화 (로컬 테스트용)
